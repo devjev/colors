@@ -5,6 +5,28 @@ const structs = @import("structs.zig");
 
 pub const EPSILON = 1E-2; // TODO this is very low accuracy. Research how to improve.
 
+pub fn expect_equal_srgb_colors(
+    comptime float_t: type,
+    expected_color: *const structs.sRGB(float_t),
+    actual_color: @TypeOf(expected_color),
+) anyerror!void {
+    try testing.expectApproxEqAbs(
+        expected_color.red,
+        actual_color.red,
+        EPSILON,
+    );
+    try testing.expectApproxEqAbs(
+        expected_color.green,
+        actual_color.green,
+        EPSILON,
+    );
+    try testing.expectApproxEqAbs(
+        expected_color.blue,
+        actual_color.blue,
+        EPSILON,
+    );
+}
+
 pub fn expect_equal_xyz_colors(
     comptime float_t: type,
     expected_color: *const structs.XYZ(float_t),
