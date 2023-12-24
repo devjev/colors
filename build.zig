@@ -3,22 +3,16 @@ const std = @import("std");
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
 
-    // Standard optimization options allow the person running `zig build` to select
-    // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall. Here we do not
-    // set a preferred release mode, allowing the user to decide how to optimize.
     const optimize = b.standardOptimizeOption(.{});
-
     const lib = b.addStaticLibrary(.{
         .name = "colors",
-        // In this case the main source file is merely a path, however, in more
-        // complicated build scripts, this could be a generated file.
-        .root_source_file = .{ .path = "src/colors.zig" },
+        .root_source_file = .{ .path = "src/library.zig" },
         .target = target,
         .optimize = optimize,
     });
 
     _ = b.addModule("colors", .{
-        .source_file = .{ .path = "src/colors.zig" },
+        .source_file = .{ .path = "src/library.zig" },
     });
 
     // This declares intent for the library to be installed into the standard
@@ -27,7 +21,7 @@ pub fn build(b: *std.Build) void {
     b.installArtifact(lib);
 
     const main_tests = b.addTest(.{
-        .root_source_file = .{ .path = "src/colors.zig" },
+        .root_source_file = .{ .path = "src/library.zig" },
         .target = target,
         .optimize = optimize,
     });

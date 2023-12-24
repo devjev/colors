@@ -34,13 +34,15 @@ pub fn xyz_to_lab(
     };
 }
 
+// TODO this seems to be inaccurate, as the X channel diverges at 3 decimal
+// See tests marked as 'XYZ -> Lab' below.
 pub fn lab_to_xyz(
     comptime float_t: type,
     lab: *const Lab(float_t),
 ) ColorError!XYZ(float_t) {
-    var y = (lab.*.L + 16.0) / 116.0;
-    var x = lab.*.a / 500.0 + y;
-    var z = y - lab.*.b / 200.0;
+    var y = (lab.L + 16.0) / 116.0;
+    var x = (lab.a / 500.0) + y;
+    var z = y - (lab.b / 200.0);
 
     x = _lab_to_xyz_adj(x);
     y = _lab_to_xyz_adj(y);
@@ -60,30 +62,67 @@ pub fn lab_to_xyz(
     };
 }
 
-// TODO Tests don't run properly, because either: I am comparing structs improperly or
-//      there is a
-test "Yellow conversion: XYZ <-> Lab" {
+test "Yellow: XYZ -> Lab" {
+    const utils = @import("../testing-utils.zig");
+
     const float_t = f32;
+
     const xyz_y012c = XYZ(float_t){
         .X = 65.544,
         .Y = 69.865,
         .Z = 10.033,
         .illuminant = Illuminant.D65_2,
     };
+
     const lab_y012c = Lab(float_t){
         .L = 86.931,
         .a = -1.924,
         .b = 87.132,
-        .illuminant = Illuminant,
+        .illuminant = Illuminant.D65_2,
     };
-    const result_from_xyz_to_lab = try xyz_to_lab(float_t, &xyz_y012c);
-    const result_from_lab_to_xyz = try lab_to_xyz(float_t, &lab_y012c);
-    std.testing.expectEqual(result_from_xyz_to_lab, lab_y012c);
-    std.testing.expectEqual(result_from_lab_to_xyz, xyz_y012c);
+
+    const result = try xyz_to_lab(float_t, &xyz_y012c);
+
+    try utils.expect_equal_lab_colors(
+        float_t,
+        &lab_y012c,
+        &result,
+    );
 }
 
-test "Blue conversion: XYZ <-> Lab" {
+test "Yellow: XYZ <- Lab" {
+    const utils = @import("../testing-utils.zig");
+
     const float_t = f32;
+
+    const xyz_y012c = XYZ(float_t){
+        .X = 65.544,
+        .Y = 69.865,
+        .Z = 10.033,
+        .illuminant = Illuminant.D65_2,
+    };
+
+    const lab_y012c = Lab(float_t){
+        .L = 86.931,
+        .a = -1.924,
+        .b = 87.132,
+        .illuminant = Illuminant.D65_2,
+    };
+
+    const result = try lab_to_xyz(float_t, &lab_y012c);
+
+    try utils.expect_equal_xyz_colors(
+        float_t,
+        &xyz_y012c,
+        &result,
+    );
+}
+
+test "Blue: XYZ <- Lab" {
+    const utils = @import("../testing-utils.zig");
+
+    const float_t = f32;
+
     const xyz_2935c = XYZ(float_t){
         .X = 11.952,
         .Y = 10.234,
@@ -96,14 +135,48 @@ test "Blue conversion: XYZ <-> Lab" {
         .b = -56.669,
         .illuminant = Illuminant.D65_2,
     };
-    const result_from_xyz_to_lab = try xyz_to_lab(float_t, &xyz_2935c);
-    const result_from_lab_to_xyz = try lab_to_xyz(float_t, &lab_2935c);
-    std.testing.expectEqual(result_from_xyz_to_lab, lab_2935c);
-    std.testing.expectEqual(result_from_lab_to_xyz, xyz_2935c);
+
+    const result = try lab_to_xyz(float_t, &lab_2935c);
+
+    try utils.expect_equal_xyz_colors(
+        float_t,
+        &xyz_2935c,
+        &result,
+    );
 }
 
-test "Black conversion: XYZ <-> Lab" {
+test "Blue: XYZ -> Lab" {
+    const utils = @import("../testing-utils.zig");
+
     const float_t = f32;
+
+    const xyz_2935c = XYZ(float_t){
+        .X = 11.952,
+        .Y = 10.234,
+        .Z = 46.136,
+        .illuminant = Illuminant.D65_2,
+    };
+    const lab_2935c = Lab(float_t){
+        .L = 38.259,
+        .a = 16.627,
+        .b = -56.669,
+        .illuminant = Illuminant.D65_2,
+    };
+
+    const result = try xyz_to_lab(float_t, &xyz_2935c);
+
+    try utils.expect_equal_lab_colors(
+        float_t,
+        &lab_2935c,
+        &result,
+    );
+}
+
+test "Black: XYZ -> Lab" {
+    const utils = @import("../testing-utils.zig");
+
+    const float_t = f32;
+
     const xyz_black = XYZ(float_t){
         .X = 0.0,
         .Y = 0.0,
@@ -116,32 +189,104 @@ test "Black conversion: XYZ <-> Lab" {
         .b = 0,
         .illuminant = Illuminant.D65_2,
     };
-    const result_from_xyz_to_lab = try xyz_to_lab(float_t, &xyz_black);
-    const result_from_lab_to_xyz = try lab_to_xyz(float_t, &lab_black);
-    std.testing.expectEqual(result_from_xyz_to_lab, lab_black);
-    std.testing.expectEqual(result_from_lab_to_xyz, xyz_black);
+
+    const result = try xyz_to_lab(float_t, &xyz_black);
+
+    try utils.expect_equal_lab_colors(
+        float_t,
+        &lab_black,
+        &result,
+    );
 }
 
-test "White conversion: XYZ <-> Lab" {
+test "Black: XYZ <- Lab" {
+    const utils = @import("../testing-utils.zig");
+
     const float_t = f32;
+
+    const xyz_black = XYZ(float_t){
+        .X = 0.0,
+        .Y = 0.0,
+        .Z = 0.0,
+        .illuminant = Illuminant.D65_2,
+    };
+    const lab_black = Lab(float_t){
+        .L = 0,
+        .a = 0,
+        .b = 0,
+        .illuminant = Illuminant.D65_2,
+    };
+
+    const result = try lab_to_xyz(float_t, &lab_black);
+
+    try utils.expect_equal_xyz_colors(
+        float_t,
+        &xyz_black,
+        &result,
+    );
+}
+
+test "White: XYZ -> Lab" {
+    const utils = @import("../testing-utils.zig");
+
+    const float_t = f32;
+
     const xyz_white = XYZ(float_t){
         .X = 95.047,
         .Y = 100.0,
         .Z = 108.883,
         .illuminant = Illuminant.D65_2,
     };
+
     const lab_white = Lab(float_t){
         .L = 100.0,
         .a = 0,
         .b = 0,
         .illuminant = Illuminant.D65_2,
     };
-    const result_from_xyz_to_lab = try xyz_to_lab(float_t, &xyz_white);
-    std.testing.expectEqual(result_from_xyz_to_lab, lab_white);
+
+    const result = try xyz_to_lab(float_t, &xyz_white);
+
+    try utils.expect_equal_lab_colors(
+        float_t,
+        &lab_white,
+        &result,
+    );
+}
+
+test "White: XYZ <- Lab" {
+    const utils = @import("../testing-utils.zig");
+
+    const float_t = f32;
+
+    const xyz_white = XYZ(float_t){
+        .X = 95.047,
+        .Y = 100.0,
+        .Z = 108.883,
+        .illuminant = Illuminant.D65_2,
+    };
+
+    const lab_white = Lab(float_t){
+        .L = 100.0,
+        .a = 0,
+        .b = 0,
+        .illuminant = Illuminant.D65_2,
+    };
+
+    const result = try lab_to_xyz(float_t, &lab_white);
+
+    try utils.expect_equal_xyz_colors(
+        float_t,
+        &xyz_white,
+        &result,
+    );
 }
 
 // Private functions -----------------------------------------------------------
 
+// Fetch reference XYZ values, which are specific to illuminants and
+// observers. The reference values are for each of the XYZ values, so by
+// convention
 fn xyz_ref_values(comptime float_t: type, illuminant: Illuminant) XYZ(float_t) {
     const ret_t = XYZ(float_t);
     return switch (illuminant) {
@@ -205,8 +350,9 @@ inline fn _xyz_to_lab_adj(chan_val: anytype) @TypeOf(chan_val) {
 }
 
 inline fn _lab_to_xyz_adj(chan_val: anytype) @TypeOf(chan_val) {
-    if (chan_val > 0.008856) {
-        return math.pow(chan_val, 3.0);
+    const chan_val_3 = math.pow(@TypeOf(chan_val), chan_val, 3.0);
+    if (chan_val_3 > 0.008856) {
+        return chan_val_3;
     } else {
         return (chan_val - 16.0 / 116.0) / 7.787;
     }

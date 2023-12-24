@@ -42,6 +42,12 @@ pub fn Lab(comptime float_t: type) type {
         a: float_t,
         b: float_t,
         illuminant: Illuminant,
+
+        pub fn is_valid(self: *const Lab(float_t)) bool {
+            return !((self.L < 0.0) or (self.L > 100.0) or
+                (self.a < -128.0) or (self.a > 128.0) or
+                (self.b < -128.0) or (self.b > 128.0));
+        }
     };
 }
 
