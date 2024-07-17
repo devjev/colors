@@ -13,12 +13,12 @@ pub fn sRGB(comptime float_t: type) type {
         // Per convention, color structs may have an is_valid routine, to check
         // if the values in the struct are what we expect.
         pub fn is_valid(self: *const sRGB(float_t)) bool {
-            return !((self.*.red < @as(float_t, 0.0)) or
-                (self.*.red > @as(float_t, 1.0)) or
-                (self.*.green < @as(float_t, 0.0)) or
-                (self.*.green > @as(float_t, 1.0)) or
-                (self.*.blue < @as(float_t, 0.0)) or
-                (self.*.blue > @as(float_t, 1.0)));
+            return !((self.red < @as(float_t, 0.0)) or
+                (self.red > @as(float_t, 1.0)) or
+                (self.green < @as(float_t, 0.0)) or
+                (self.green > @as(float_t, 1.0)) or
+                (self.blue < @as(float_t, 0.0)) or
+                (self.blue > @as(float_t, 1.0)));
         }
     };
 }
